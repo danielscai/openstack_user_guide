@@ -237,7 +237,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 2.1. 镜像操作
 ------------------
 
-**创建镜像
+**创建镜像**
 
 自己制作镜像，或者去 [cloud ubuntu]: http://cloud-images.ubuntu.com/ 下载ubuntu官方镜像，ubuntu官方镜像已经集成cloudinit 可以直接使用metadata service   
 下载 precise的img文件 ，并上传到glance中
@@ -274,7 +274,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
      | 2fd11347-c951-4f81-ac54-205afd783791 | precise                 | qcow2       | bare             | 233832448   | active |
      +--------------------------------------+-------------------------+-------------+------------------+-------------+--------+
 
-**删除镜像
+**删除镜像**
 
 运行 `glance image-delete` 删除对应的image，参数为image id
 
@@ -287,7 +287,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 2.2.1 创建，删除卷
 ------------------
 
-**创建空卷
+**创建空卷**
 
 `cinder create` 需要一个参数size，这里指定10，默认单位为G;名称为empty-vol 
 
@@ -308,7 +308,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
      |     volume_type     |                 None                 |
      +---------------------+--------------------------------------+
 
-**从image 创建卷
+**从image 创建卷**
     
 使用`glance image-list`查看可用image id，运行`cinder create`命令创建volume
 
@@ -330,7 +330,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
      |     volume_type     |                 None                 |
      +---------------------+--------------------------------------+
 
-**对卷进行snapshot
+**对卷进行snapshot**
 
 对卷进行snapshot，参数为volume id
 
@@ -345,7 +345,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
      | 647e1bb6-6087-48e4-8310-1b3047893ae5 | 4f111593-12e9-471b-939b-d72fee230cbd |  creating |        vol-snapshot1         |  10  |
      +--------------------------------------+--------------------------------------+-----------+------------------------------+------+
 
-**从volume snapshot创建卷
+**从volume snapshot创建卷**
 
 在虚拟机从volume snapshot启动相关章节有详细描述
 
@@ -369,7 +369,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 2.2.2 在虚拟机中挂载卸载卷
 -----------------------
 
-**向虚拟机中添加卷
+**向虚拟机中添加卷**
 
 使用`nova volume-attach <server> <volume> <device>`将卷添加到虚拟机中
 
