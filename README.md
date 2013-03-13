@@ -234,7 +234,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 2.存储操作
 ==================
 
-2.1 镜像操作
+2.1. 镜像操作
 ------------------
 
 **创建镜像
@@ -274,36 +274,141 @@ https://bugs.launchpad.net/nova/+bug/1008622*
      | 2fd11347-c951-4f81-ac54-205afd783791 | precise                 | qcow2       | bare             | 233832448   | active |
      +--------------------------------------+-------------------------+-------------+------------------+-------------+--------+
 
-** 删除镜像
+**删除镜像
 
 运行 `glance image-delete` 删除对应的image，参数为image id
 
      # glance image-delete 2fd11347-c951-4f81-ac54-205afd783791
 
 
-2.2 卷操作 
+2.2. 卷操作 
 ------------------
 
-** 创建空卷
+2.2.1 创建，删除卷
+------------------
 
-# cinder create --display-name empty-vol 10
-+---------------------+--------------------------------------+
-|       Property      |                Value                 |
-+---------------------+--------------------------------------+
-|     attachments     |                  []                  |
-|  availability_zone  |                 nova                 |
-|      created_at     |      2013-03-13T05:19:05.765784      |
-| display_description |                 None                 |
-|     display_name    |              empty-vol               |
-|          id         | eed6ef03-14f4-4cac-8182-3e19999f896d |
-|       metadata      |                  {}                  |
-|         size        |                  10                  |
-|     snapshot_id     |                 None                 |
-|        status       |               creating               |
-|     volume_type     |                 None                 |
-+---------------------+--------------------------------------+
+**创建空卷
 
-** 从image 创建卷
+`cinder create` 需要一个参数size，这里指定10，默认单位为G;名称为empty-vol 
+
+     # cinder create --display-name empty-vol 10
+     +---------------------+--------------------------------------+
+     |       Property      |                Value                 |
+     +---------------------+--------------------------------------+
+     |     attachments     |                  []                  |
+     |  availability_zone  |                 nova                 |
+     |      created_at     |      2013-03-13T05:19:05.765784      |
+     | display_description |                 None                 |
+     |     display_name    |              empty-vol               |
+     |          id         | eed6ef03-14f4-4cac-8182-3e19999f896d |
+     |       metadata      |                  {}                  |
+     |         size        |                  10                  |
+     |     snapshot_id     |                 None                 |
+     |        status       |               creating               |
+     |     volume_type     |                 None                 |
+     +---------------------+--------------------------------------+
+
+**从image 创建卷
+    
+使用`glance image-list`查看可用image id，运行`cinder create`命令创建volume
+
+     # cinder create --image-id 533a5c7b-2177-4db2-b128-b88ac1779b5b --display-name vol-from-image 10
+     +---------------------+--------------------------------------+
+     |       Property      |                Value                 |
+     +---------------------+--------------------------------------+
+     |     attachments     |                  []                  |
+     |  availability_zone  |                 nova                 |
+     |      created_at     |      2013-03-13T05:27:47.160512      |
+     | display_description |                 None                 |
+     |     display_name    |            vol-from-image            |
+     |          id         | 4f111593-12e9-471b-939b-d72fee230cbd |
+     |       image_id      | 533a5c7b-2177-4db2-b128-b88ac1779b5b |
+     |       metadata      |                  {}                  |
+     |         size        |                  10                  |
+     |     snapshot_id     |                 None                 |
+     |        status       |               creating               |
+     |     volume_type     |                 None                 |
+     +---------------------+--------------------------------------+
+
+**对卷进行snapshot
+
+对卷进行snapshot，参数为volume id
+
+     # cinder snapshot-create --display-name vol-snapshot1 4f111593-12e9-471b-939b-d72fee230cbd
+
+运行`cinder snapshot-list`查看snapshot
+
+     # cinder snapshot-list
+     +--------------------------------------+--------------------------------------+-----------+------------------------------+------+
+     |                  ID                  |              Volume ID               |   Status  |         Display Name         | Size |
+     +--------------------------------------+--------------------------------------+-----------+------------------------------+------+
+     | 647e1bb6-6087-48e4-8310-1b3047893ae5 | 4f111593-12e9-471b-939b-d72fee230cbd |  creating |        vol-snapshot1         |  10  |
+     +--------------------------------------+--------------------------------------+-----------+------------------------------+------+
+
+**从volume snapshot创建卷
+
+在虚拟机从volume snapshot启动相关章节有详细描述
+
+     # nova volume-create --snapshot-id 8cd8c57a-5ffa-4c92-98a2-ec10ae899166 --display-name vol-from-snap 10 
+     +---------------------+--------------------------------------+
+     | Property            | Value                                |
+     +---------------------+--------------------------------------+
+     | attachments         | []                                   |
+     | availability_zone   | nova                                 |
+     | created_at          | 2013-03-12T09:34:53.498823           |
+     | display_description | None                                 |
+     | display_name        | vol-from-snap                        |
+     | id                  | f18b2df7-b3be-44ad-b521-c69f04ab8c49 |
+     | metadata            | {}                                   |
+     | size                | 10                                   |
+     | snapshot_id         | 8cd8c57a-5ffa-4c92-98a2-ec10ae899166 |
+     | status              | creating                             |
+     | volume_type         | None                                 |
+     +---------------------+--------------------------------------+
+
+2.2.2 在虚拟机中挂载卸载卷
+-----------------------
+
+**向虚拟机中添加卷
+
+使用`nova volume-attach <server> <volume> <device>`将卷添加到虚拟机中
+
+     # nova volume-attach b30c0914-b87b-41d4-a381-7168d6be4cf3 eed6ef03-14f4-4cac-8182-3e19999f896d /dev/vdb
+     +----------+--------------------------------------+
+     | Property | Value                                |
+     +----------+--------------------------------------+
+     | device   | /dev/vdb                             |
+     | id       | eed6ef03-14f4-4cac-8182-3e19999f896d |
+     | serverId | b30c0914-b87b-41d4-a381-7168d6be4cf3 |
+     | volumeId | eed6ef03-14f4-4cac-8182-3e19999f896d |
+     +----------+--------------------------------------+
+
+到虚拟机中查看vdb是都添加成功
+     # fdisk -l  | grep vdb
+     Disk /dev/vdb doesn't contain a valid partition table
+     Disk /dev/vdb: 10.7 GB, 10737418240 bytes
+
+**将卷从虚拟机中卸载
+
+使用`nova volume-detach <server> <volume>`将卷从虚拟机中卸载，卸载前请保证磁盘已经umount，否则数据无法保证数据一致性。
+
+     # nova volume-detach b30c0914-b87b-41d4-a381-7168d6be4cf3 eed6ef03-14f4-4cac-8182-3e19999f896d
+
+到虚拟机中查看vdb是都卸载成功
+     # fdisk -l  | grep vdb
+     # 
+
+2.2.3 卷的在线扩容
+------------------
+未完成
+
+2.2.4 卷的线下扩容
+------------------
+未完成
+
+
+
+
 
 
 
