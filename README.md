@@ -175,7 +175,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 1.8. 使用metadata
 ------------------
 
-编写`user data`,参考https://help.ubuntu.com/community/CloudInit
+编写`user data`,参考[cloudinit](https://help.ubuntu.com/community/CloudInit)
 
 **更改主机名**
 
@@ -224,7 +224,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 
      # nova boot --user-data write_files --image 533a5c7b-2177-4db2-b128-b88ac1779b5b --flavor 1 --block_device_mapping vda=92952076-d80b-4fc0-ae4b-894638d1972b:::0 vm5
 
-更多实例，请参考http://bazaar.launchpad.net/~cloud-init-dev/cloud-init/trunk/files/head:/doc/examples/
+更多实例，请参考[cloud-init-dev](http://bazaar.launchpad.net/~cloud-init-dev/cloud-init/trunk/files/head:/doc/examples/)
 
 1.9. 虚拟机扩容
 ------------------
@@ -239,7 +239,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 
 **创建镜像**
 
-自己制作镜像，或者去 [cloud ubuntu]: http://cloud-images.ubuntu.com/ 下载ubuntu官方镜像，ubuntu官方镜像已经集成cloudinit 可以直接使用metadata service   
+自己制作镜像，或者去 [cloud ubuntu](http://cloud-images.ubuntu.com/) 下载ubuntu官方镜像，ubuntu官方镜像已经集成cloudinit 可以直接使用metadata service   
 下载 precise的img文件 ，并上传到glance中
 
      # wget http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
@@ -388,7 +388,7 @@ https://bugs.launchpad.net/nova/+bug/1008622*
      Disk /dev/vdb doesn't contain a valid partition table
      Disk /dev/vdb: 10.7 GB, 10737418240 bytes
 
-**将卷从虚拟机中卸载
+**将卷从虚拟机中卸载**
 
 使用`nova volume-detach <server> <volume>`将卷从虚拟机中卸载，卸载前请保证磁盘已经umount，否则数据无法保证数据一致性。
 
@@ -407,8 +407,6 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 未完成
 
 
-
-
 3. 网络操作
 ==================
 
@@ -418,10 +416,89 @@ https://bugs.launchpad.net/nova/+bug/1008622*
 **vlan模式下的接口作用**
 ![vlan模式接口作用](http://imgout.ph.126.net/12896002/vm-network.jpg)
 
+3.1.1 创建网络
+------------------
+
+使用`quantum net-create`创建虚拟网络，`quantum net-create`参数中`--provider:segmentation_id`为vlan id ,这个vlan id在物理交换机中必须提前建立
+
+     # quantum net-create vlan-net --provider:network_type vlan --provider:physical_network physnet1 --provider:segmentation_id 1024 
+     Created a new network:
+     +---------------------------+--------------------------------------+
+     | Field                     | Value                                |
+     +---------------------------+--------------------------------------+
+     | admin_state_up            | True                                 |
+     | id                        | 347039c5-bfd6-498b-999a-a577a998427d |
+     | name                      | vlan-net                             |
+     | provider:network_type     | vlan                                 |
+     | provider:physical_network | physnet1                             |
+     | provider:segmentation_id  | 1024                                 |
+     | router:external           | False                                |
+     | shared                    | False                                |
+     | status                    | ACTIVE                               |
+     | subnets                   |                                      |
+     | tenant_id                 | acbd5e5812c1475f9ec60104569710f4     |
+     +---------------------------+--------------------------------------+
+
+
+3.1.2 创建子网
+------------------
+
+使用`quantum subnet-create`创建子网，第一个参数为网络名，第二个参数为网络cidr 
+
+     # quantum subnet-create vlan-net 10.10.11.0/24
+     Created a new subnet:
+     +------------------+------------------------------------------------+
+     | Field            | Value                                          |
+     +------------------+------------------------------------------------+
+     | allocation_pools | {"start": "10.10.11.2", "end": "10.10.11.254"} |
+     | cidr             | 10.10.11.0/24                                  |
+     | dns_nameservers  |                                                |
+     | enable_dhcp      | True                                           |
+     | gateway_ip       | 10.10.11.1                                     |
+     | host_routes      |                                                |
+     | id               | a8d6005f-c051-491d-aa92-19322206a992           |
+     | ip_version       | 4                                              |
+     | name             |                                                |
+     | network_id       | 347039c5-bfd6-498b-999a-a577a998427d           |
+     | tenant_id        | acbd5e5812c1475f9ec60104569710f4               |
+     +------------------+------------------------------------------------+
+
+使用 查看刚创建的网络，及其子网
+
+     # quantum net-list
+     +--------------------------------------+--------------+--------------------------------------+
+     | id                                   | name         | subnets                              |
+     +--------------------------------------+--------------+--------------------------------------+
+     | 347039c5-bfd6-498b-999a-a577a998427d | vlan-net     | a8d6005f-c051-491d-aa92-19322206a992 |
+     +--------------------------------------+--------------+--------------------------------------+
+
+
+3.1.3 启动虚拟机
+------------------
+网络为刚创建的网络
+
+     # nova boot --nic net-id=347039c5-bfd6-498b-999a-a577a998427d --image 533a5c7b-2177-4db2-b128-b88ac1779b5b --flavor 1 --block_device_mapping vda=f18fc147-c16d-4a5a-a5cb-44cef08a6352:::0 vm7
 
 
 3.2 gre 模式下的网络操作
 ------------------
+
+3.2.1 创建gre网络
+------------------
+
+下载[quantum script](https://raw.github.com/EmilienM/openstack-folsom-guide/master/scripts/quantum-networking.sh)
+运行脚本
+
+     # bash quantum-networking.sh
+
+3.2.3 启动虚拟机
+------------------
+网络为刚创建的网络，这个过程和vlan模式一样
+
+     # nova boot --nic net-id=347039c5-bfd6-498b-999a-a577a998427d --image 533a5c7b-2177-4db2-b128-b88ac1779b5b --flavor 1 --block_device_mapping vda=f18fc147-c16d-4a5a-a5cb-44cef08a6352:::0 vm7
+
+
+
 
 
 
