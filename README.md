@@ -1,5 +1,7 @@
- openstack 基本功能
+ OpenStack Folsom 基本功能使用指南
 
++ 作者: Daniels Cai
++ 版本: 1.0 
 
 1.虚拟机操作
 ==================
@@ -506,4 +508,6 @@ OpenStack Folsom User Guide by Daniels Cai is licensed under a Creative Commons 
 
 ![image](http://i.imgur.com/4XWrp.png)   
 To view a copy of this license, visit <http://creativecommons.org/licenses/by/3.0/deed.en_US>.
+
+
 
